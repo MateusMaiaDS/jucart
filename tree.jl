@@ -1,15 +1,24 @@
-mutable struct node
+abstract type Node end
 
-    index::Int64
-    left::Union{Nothing,node}
-    right::Union{Nothing,node}
+mutable struct BranchNode <: Node
+    split_var::UInt16
+    cutpoint::Float64
+    left::Node
+    right::Node
 
-    node(index::Int64) = new(index,nothing,nothing)
 end
 
-node_example = node(1)
+mutable struct Leaf <: Node
+    μ::Float64
+    Σr::Float64
+    ∑r²::Float64
+end
 
-print(node_example.index)
-print(node_example.left)
-print(node_example.right)
+function get_leaf_nodes(node::Node)
 
+     if(typeof(node)==Leaf)
+        [node]
+     else 
+        reduce(vcat,[get_leaf_nodes(node.left),get_leaf_nodes(node.right)])
+     end
+end
