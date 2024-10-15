@@ -1,6 +1,6 @@
 abstract type Node end
 
-mutable struct BranchNode <: Node
+mutable struct Branch <: Node
     split_var::UInt16
     cutpoint::Float64
     left::Node
@@ -39,13 +39,37 @@ function get_my_parent(node::Node, parent_candidate::Branch)
     if (node==parent_candidate.left) || (node==parent_candidate.right)
         return parent_candidate
     else 
-        isa(get_my_parent(node,parent_candidate.left),Nothing)?
-            get_my_parent(node,parent_candidate.right):get_my_parent(node,parent_candidate.left)
+        isa(get_my_parent(node,parent_candidate.left),Nothing) ? get_my_parent(node,parent_candidate.right) : get_my_parent(node,parent_candidate.left)
     end
 end 
 
 # Simple, if the parent candidate is a Leaf, it cannot be a parent!
 function get_my_parent(node::Node, parent_candidate::Leaf)
+    return nothing
+end
+
+# Initialise the search of onlyparents for a tree
+function search_onlyparents(tree::Tree)
+    branches = Branch[]
+    if isa(tree.root,Leaf) 
+        return [tree.root] # Check this latter for me it would need to call nothing as there is no parents to search
+    else 
+        search_onlyparents(tree.root,branches)
+    end
+end
+
+# Extremely intuitive, keep search for only parents nodes if there is always a branch
+function search_onlyparents(branch::Branch,branches::Vector{Branch})
+    if isa(branch.left,Leaf) && isa(branch.right,Leaf)
+        push!(branches,branch)
+    else 
+        search_onlyparents(branch.left,branches)
+        search_onlyparents(branch.right,branches)
+    end 
+    return branches
+end
+
+function search_onlyparents(leaf::Leaf,branches::Vector{Branch}) 
     return nothing
 end
 
