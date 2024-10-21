@@ -53,6 +53,7 @@ function search_onlyparents(tree::Tree)
     branches = Branch[]
     if isa(tree.root,Leaf) 
         return [tree.root] # Check this latter for me it would need to call nothing as there is no parents to search
+                           # --- in this case it will always return at least a root when this function is called.
     else 
         search_onlyparents(tree.root,branches)
     end
@@ -73,4 +74,23 @@ function search_onlyparents(leaf::Leaf,branches::Vector{Branch})
     return nothing
 end
 
+# Function to get the depth
+function get_depth(node::Node,tree::Tree)
+    tree.root == node ? 0 : 1 + get_depth(get_my_parent(node,tree),Tree)
+end
 
+function get_depth(tree::Tree)
+
+    leaves_depth = []
+
+    for leaves in get_leaf_nodes(tree):
+        push!(leaves_depth,get_depth(leaves,tree))
+    end
+
+    return maximum(leaves_depth)
+end
+
+function isLeft(node::Node,tree::Tree)
+    parent_node::Node = get_my_parent(node,tree)
+    parent_node.left == node ? true : false
+end
