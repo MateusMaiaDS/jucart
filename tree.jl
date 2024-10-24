@@ -83,7 +83,7 @@ function get_depth(tree::Tree)
 
     leaves_depth = []
 
-    for leaves in get_leaf_nodes(tree):
+    for leaves in get_leaf_nodes(tree)
         push!(leaves_depth,get_depth(leaves,tree))
     end
 
