@@ -6,10 +6,17 @@ struct Hypers
     d_τ::Float64
 end
 
-struct BartModel
-    hypers::Hypers
-    td::TrainData
-    mcmc::MCMC
+struct TrainData
+    n::Int64
+    p::Int64
+    x_train::Matrix{Float64}
+    y_train::Matrix{Float64} 
+    xcut::Matrix{Float64}
+    xmin::Matrix{Float64}
+    xmax::Matrix{Float64}
+    ymin::Float64
+    ymax::Float64
+    τ_OLS::Float64
 end
 
 struct MCMC
@@ -25,18 +32,13 @@ struct MCMC
 
 end
 
-struct TrainData
-    n::Int64
-    p::Int64
-    x_train::Matrix{Float64}
-    y_train::Matrix{Float64} 
-    xcut::Matrix{Float64}
-    xmin::Matrix{Float64}
-    xmax::Matrix{Float64}
-    ymin::Float64
-    ymax::Float64
-    τ_OLS::Float64
+struct BartModel
+    hypers::Hypers
+    td::TrainData
+    mcmc::MCMC
 end
+
+
 
 function TrainData(x_train::Matrix{Float64},y_train::Matrix{Float64},numcut::Int64)
     n = length(y_train)
@@ -44,8 +46,10 @@ function TrainData(x_train::Matrix{Float64},y_train::Matrix{Float64},numcut::Int
     xmin = minimum(x_train,dims = 1)
     xmax = maximum(x_train,dims = 1)
     ymin = minimum(y_train)
-    y_max = maximum(y_train)
-    x_train = scale_X!(x_train)
+    ymax = maximum(y_train)
+    x_train = scale_X!(x_train,xmin,xmax)
+    y_train = normalize_y!(y_train,ymin,ymax)
 
+   TrainData(n,p,x_train,y_train,x_train,xmin,xmax,ymin,ymax,numcut*0.0)
 end
 
