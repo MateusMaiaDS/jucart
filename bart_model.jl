@@ -6,7 +6,7 @@ struct Hypers
     d_τ::Float64
 end
 
-struct TrainData
+mutable struct TrainData
     n::Int64
     p::Int64
     x_train::Matrix{Float64}
