@@ -13,5 +13,4 @@ y = 5 .+ 2 .*x[:,1] .+ randn(n_)              # Response vector#
 y = reshape(y, :, 1)        # Explicitly reshape y into a 4x1 matrix
 
 td_::TrainData = TrainData(x,y,1000)
-naive_tau!(td_)
-print(td_.τ_OLS^(-1/2))
+

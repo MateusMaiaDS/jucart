@@ -6,7 +6,7 @@ struct Hypers
     d_τ::Float64
 end
 
-mutable struct TrainData
+struct TrainData
     n::Int64
     p::Int64
     x_train::Matrix{Float64}
@@ -47,9 +47,9 @@ function TrainData(x_train::Matrix{Float64},y_train::Matrix{Float64},numcut::Int
     xmax = maximum(x_train,dims = 1)
     ymin = minimum(y_train)
     ymax = maximum(y_train)
-    x_train = scale_X!(x_train,xmin,xmax)
-    y_train = normalize_y!(y_train,ymin,ymax)
-
-   TrainData(n,p,x_train,y_train,x_train,xmin,xmax,ymin,ymax,numcut*0.0)
+    #x_train = scale_X!(x_train,xmin,xmax)
+    #y_train = normalize_y!(y_train,ymin,ymax)
+    τ_OLS = naive_tau(x_train,y_train)
+   TrainData(n,p,x_train,y_train,x_train,xmin,xmax,ymin,ymax,τ_OLS)
 end
 

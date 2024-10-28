@@ -10,18 +10,20 @@ function unnormalize_y!(y_train::Matrix{Float64}, ymin::Float64,ymax::Float64)
     y_train .= (ymax.-ymin).*(y_train .+ 0.5)./ .- ymin
 end
 
-function naive_tau!(traindata::TrainData)
+function naive_tau(x_train::Matrix{Float64},y_train::Matrix{Float64})
 
-    X_intercept::Matrix{Float64} = hcat(ones(traindata.n),traindata.x_train)
+    n_  = size(x_train,1)
+    p_ = size(x_train,2)
 
-    β = (X_intercept'*X_intercept)\(X_intercept'*traindata.y_train)
+    X_intercept::Matrix{Float64} = hcat(ones(n_),x_train)
+
+    β = (X_intercept'*X_intercept)\(X_intercept'*y_train)
     y_hat = X_intercept*β
-    residuals = traindata.y_train - y_hat
+    residuals = y_train - y_hat
     
-    RSS = sum(residuals.^2)
-    sigma_squared = RSS/(traindata.n-traindata.p-1)
+    RSS = dot(residuals,residuals)
+    sigma_squared = RSS/(n_-p_-1)
 
-    traindata.τ_OLS = 1/sigma_squared
-    return
+    return 1/sigma_squared
 end
 
