@@ -27,3 +27,43 @@ function naive_tau(x_train::Matrix{Float64},y_train::Matrix{Float64})
     return 1/sigma_squared
 end
 
+# ===========
+# ( THIS ONE IS NOT REALLY USED IT )
+# Getting the cutpoints matrix considering all variables scaled 
+# ===========
+
+function get_xcut(numcut::Int64)
+
+    xcut::Matrix{Float64} = Matrix{Float64}(undef,numcut,1)
+
+    xcut[:,1] = range(0,stop = 1, length = numcut+2)[2:(end-1)]
+
+    return xcut
+
+end
+
+# Getting the cutpoints matrix considering different scales
+function get_xcut(x_train::Matrix{Float64},xmin::Matrix{Float64},xmax::Matrix{Float64},numcut::Int64)
+
+    xcut::Matrix{Float64} = Matrix{Float64}(undef,numcut,size(x_train,2))
+
+    for j = 1:size(x_train,2)
+        xcut[:,j] = range(xmin[1,j],stop = xmax[1,j], length = numcut+2)[2:(end-1)]
+    end
+
+    return xcut
+
+end
+
+# Getting a quantile version for it
+function get_xcut(x_train::Matrix{Float64},numcut::Int64)
+
+    xcut::Matrix{Float64} = Matrix{Float64}(undef,numcut,size(x_train,2))
+    probs = collect(0:numcut+1) ./(numcut+1)
+    for j = 1:size(x_train,2)
+        xcut[:,j] = Statistics.quantile(x_train[:,j], probs)[2:(end-1)]
+    end
+
+    return xcut
+
+end

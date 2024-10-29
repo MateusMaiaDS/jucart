@@ -12,5 +12,5 @@ x  = rand(n_,2)
 y = 5 .+ 2 .*x[:,1] .+ randn(n_)              # Response vector#
 y = reshape(y, :, 1)        # Explicitly reshape y into a 4x1 matrix
 
-td_::TrainData = TrainData(x,y,1000)
+td_::TrainData = TrainData(x,y,100,false)
 
