@@ -41,7 +41,7 @@ struct Hypers
         qchi = quantile(Chisq(a_τ),1-q)
         lambda = (td.τ_OLS^(-1)*qchi)/a_τ
         d_τ = lambda*a_τ/2
-        
+
         if isa(td.y_train,Matrix{Int})
             τ_μ = (m*k^2)/9
         else 
@@ -69,9 +69,9 @@ function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int6
     ymin = minimum(y_train)
     ymax = maximum(y_train)
     scale_X!(x_train,xmin,xmax)
-    #if isa(y_train,Matrix{Float64})
-    #    normalize_y!(y_train,ymin,ymax)
-    #end
+    if isa(y_train,Matrix{Float64})
+        normalize_y!(y_train,ymin,ymax)
+    end
 
     τ_OLS = naive_tau(x_train,y_train)
     if usequant
