@@ -10,7 +10,7 @@ function unnormalize_y!(y_train::Matrix{Float64}, ymin::Float64,ymax::Float64)
     y_train .= (ymax.-ymin).*(y_train .+ 0.5)./ .- ymin
 end
 
-function naive_tau(x_train::Matrix{Float64},y_train::Matrix{Float64})
+function naive_sigma(x_train::Matrix{Float64},y_train::Matrix{Float64})
 
     n_  = size(x_train,1)
     p_ = size(x_train,2)
@@ -22,9 +22,9 @@ function naive_tau(x_train::Matrix{Float64},y_train::Matrix{Float64})
     residuals = y_train - y_hat
     
     RSS = dot(residuals,residuals)
-    sigma_squared = RSS/(n_-p_-1)
+    sigma_naive = sqrt(RSS/(n_-p_-1))
 
-    return 1/sigma_squared
+    return sigma_naive
 end
 
 # ===========

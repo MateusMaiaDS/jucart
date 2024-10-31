@@ -11,7 +11,7 @@ struct TrainData
     xcut::Matrix{Float64}
     ymin::Float64
     ymax::Float64
-    τ_OLS::Float64
+    σ_OLS::Float64
 end
 
 struct MCMC
@@ -33,22 +33,23 @@ struct Hypers
     α::Float64
     β::Float64
     k::Float64
-    τ_μ::Float64
+    σ_μ::Float64
     q::Float64
-    a_τ::Float64
-    d_τ::Float64
-    function Hypers(td::TrainData; m = 200,α = 0.95, β = 2.0,k = 2.0, q = 0.9,a_τ = 3)
-        qchi = quantile(Chisq(a_τ),1-q)
-        lambda = (td.τ_OLS^(-1)*qchi)/a_τ
-        d_τ = lambda*a_τ/2
+    ν::Float64
+    λ::Float64
+
+    function Hypers(td::TrainData; m = 200,α = 0.95, β = 2.0,k = 2.0, q = 0.9,ν = 3)
+
+        # Quicker and clever way of obtaing
+        λ = 1/quantile(InverseGamma(ν/2,ν/(2*td.σ_OLS^2)),q)
 
         if isa(td.y_train,Matrix{Int})
-            τ_μ = (m*k^2)/9
+            σ_μ = sqrt(9/(m*k^2))
         else 
-            τ_μ = (4*m*k^2)/(maximum(td.y_train)-minimum(td.y_train))
+            σ_μ = sqrt((maximum(td.y_train)-minimum(td.y_train))/(4*m*k^2))
         end
-        
-        new(m,α,β,k,τ_μ,q,a_τ,d_τ)
+                
+        new(m,α,β,k,σ_μ,q,ν,λ)
     end              
 end
 
@@ -73,13 +74,13 @@ function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int6
         normalize_y!(y_train,ymin,ymax)
     end
 
-    τ_OLS = naive_tau(x_train,y_train)
+    σ_OLS = naive_sigma(x_train,y_train)
     if usequant
         xcut = get_xcut(x_train,numcut)
     else 
         xcut = get_xcut(x_train,xmin,xmax,numcut)
     end
 
-    TrainData(n,p,x_train,y_train,xmin,xmax,xcut,ymin,ymax,τ_OLS)
+    TrainData(n,p,x_train,y_train,xmin,xmax,xcut,ymin,ymax,σ_OLS)
 end
 
