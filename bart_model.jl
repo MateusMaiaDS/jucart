@@ -1,5 +1,16 @@
 using Distributions
 
+mutable struct SufficientStats
+    number_leaves::Int
+    sum_r::Vector{Float64}
+    sum_r_sq::Vector{Float64}
+
+struct BartTree
+
+    tree::Tree
+    
+
+end
 
 struct TrainData
     n::Int64

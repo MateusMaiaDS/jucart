@@ -11,9 +11,21 @@ function get_log_prob_grow_leaf(depth::Int64, bm::BartModel)
 
 end
 
+# Probability ratio from a MH step from a PRUNE move ( no node to calculate the whole tree)
 function get_log_prob_prune_node(depth::Int64, bm::BartModel)
 
     prob_selected_node_nonterminal::Float64 = get_prob_non_terminal(depth,bm) # Calculate here before to avoid calculate twice later
 
     return log(1-prob_selected_leaf_nonterminal) - (log(prob_selected_node_nonterminal) + 2*log(1-get_prob_non_terminal(depth+1,bm))) 
 end
+
+# Growing a node
+function grow(tree::Tree,bm::BartModel)
+
+    leaves::Vector{Node} = get_leaf_nodes(tree.root)
+    index = rand(1:length(leaves))
+    leaf = leaves[index]
+
+    new_variable = sample_var()
+    new_cutpoint = drawcut()
+
