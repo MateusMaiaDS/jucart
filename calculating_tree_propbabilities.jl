@@ -29,3 +29,38 @@ function grow(tree::Tree,bm::BartModel)
     new_variable = sample_var()
     new_cutpoint = drawcut()
 
+end
+
+# Getting the probability of going to left (here we have hard-boundaries yet so it will be assigned one)
+function probleft(x::Vector{Float64},branch::Branch,Tree::Tree)
+    ifelse.(x[branch.split_var]<= branch.xcut ? 1.0 : 0.0)
+end
+
+function probleft(X::Vector{Float64},branch::Branch,Tree::Tree)
+    ifelse.(X[:,branch.split_var]<= branch.xcut ? 1.0 : 0.0)
+end
+
+function leafprob(x::Vector{Float64},tree::Tree)
+    if isa(tree.root,Leaf)
+        1.0
+    end 
+    S = Float64[]
+    goesleft = probleft(x, tree.root,tree)
+    goesright = 1 - goesleft
+    leafprob(x, tree.root.left,tree,goesleft,S)
+    leafprob(x, tree.root.right,tree,goesright,S)
+end
+
+function leafprob(x::Vector{Float64}, branch::Branch, tree::Tree,current_prob::Float64, S::Vector{Float64})
+    goesleft = current_prob * probleft(x,branch,tree)
+    goesright = current_prob - goesleft
+    leafprob(x,branch.left,tree,goesleft,S)
+    leafprob(x,branch.right,tree,goesright,S)
+end
+
+function leafprob(x::Vector{Float64}, leaf::Leaf, tree::Tree, current_prob::Float64, S::Vector{Float64})
+    push!(S,current_prob)
+end
+
+# STILL NEED TO DEFINE THE VALUE FOR S (which is tree indidcator matrix
+# go from line 73 of proposals.jl

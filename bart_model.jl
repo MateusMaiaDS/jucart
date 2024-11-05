@@ -1,14 +1,18 @@
 using Distributions
 
-mutable struct SufficientStats
+mutable struct SufficientStatsBART
     number_leaves::Int
-    sum_r::Vector{Float64}
-    sum_r_sq::Vector{Float64}
+    S::Matrix{Float64}
+
+end
+
+    
 
 struct BartTree
 
     tree::Tree
-    
+    X_tree::Matrix{Float64} # This is the matrix of indicators to represent the terminal node structure. It has dimensions n × number_leaves
+    ss::SufficientStats 
 
 end
 
