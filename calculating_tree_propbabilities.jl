@@ -32,27 +32,28 @@ function grow(tree::Tree,bm::BartModel)
 end
 
 # Getting the probability of going to left (here we have hard-boundaries yet so it will be assigned one)
-function probleft(x::Vector{Float64},branch::Branch,Tree::Tree)
+function probleft(x::Vector{Float64},branch::Branch)
     ifelse.(x[branch.split_var]<= branch.xcut ? 1.0 : 0.0)
 end
 
-function probleft(X::Vector{Float64},branch::Branch,Tree::Tree)
+function probleft(X::Vector{Float64},branch::Branch)
     ifelse.(X[:,branch.split_var]<= branch.xcut ? 1.0 : 0.0)
 end
+
 
 function leafprob(x::Vector{Float64},tree::Tree)
     if isa(tree.root,Leaf)
         1.0
     end 
     S = Float64[]
-    goesleft = probleft(x, tree.root,tree)
-    goesright = 1 - goesleft
+    goesleft = probleft(x, tree.root)
+    goesright = 1.0 - goesleft
     leafprob(x, tree.root.left,tree,goesleft,S)
     leafprob(x, tree.root.right,tree,goesright,S)
 end
 
 function leafprob(x::Vector{Float64}, branch::Branch, tree::Tree,current_prob::Float64, S::Vector{Float64})
-    goesleft = current_prob * probleft(x,branch,tree)
+    goesleft = current_prob * probleft(x,branch)
     goesright = current_prob - goesleft
     leafprob(x,branch.left,tree,goesleft,S)
     leafprob(x,branch.right,tree,goesright,S)
@@ -62,5 +63,19 @@ function leafprob(x::Vector{Float64}, leaf::Leaf, tree::Tree, current_prob::Floa
     push!(S,current_prob)
 end
 
-# STILL NEED TO DEFINE THE VALUE FOR S (which is tree indidcator matrix
-# go from line 73 of proposals.jl
+function leafprob(X::Matrix{Float64},bt::BartTree,bm::BartModel)
+    S::Matrix{Float64} = zeros(Float64,bm.td.n,bt.ss.number_leaves)
+    for i in 1:bm.td.n
+        S[i,:] = leafprob(X[i,:],bt.tree)
+    end
+    S
+end
+
+function leafprob(X::Matrix{Float64},tree::Tree)::Matrix{Float64}
+    n::Int64 = size(X,1)
+    S::Matrix{Float64} = zeros(Float64,n,length(get_leaf_nodes(tree.root)))
+    for i in 1:n
+        S[i,:] = leafprob(X[i,:],tree)
+    end
+    S
+end

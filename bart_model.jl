@@ -1,6 +1,6 @@
 using Distributions
 
-mutable struct SufficientStatsBART
+mutable struct SufficientStats
     number_leaves::Int
     S::Matrix{Float64}
 
