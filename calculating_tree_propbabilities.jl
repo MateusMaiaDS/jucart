@@ -45,37 +45,37 @@ function leafprob(x::Vector{Float64},tree::Tree)
     if isa(tree.root,Leaf)
         1.0
     end 
-    S = Float64[]
+    X_tree = Float64[]
     goesleft = probleft(x, tree.root)
     goesright = 1.0 - goesleft
-    leafprob(x, tree.root.left,tree,goesleft,S)
-    leafprob(x, tree.root.right,tree,goesright,S)
+    leafprob(x, tree.root.left,tree,goesleft,X_tree)
+    leafprob(x, tree.root.right,tree,goesright,X_tree)
 end
 
-function leafprob(x::Vector{Float64}, branch::Branch, tree::Tree,current_prob::Float64, S::Vector{Float64})
+function leafprob(x::Vector{Float64}, branch::Branch, tree::Tree,current_prob::Float64, X_tree::Vector{Float64})
     goesleft = current_prob * probleft(x,branch)
     goesright = current_prob - goesleft
-    leafprob(x,branch.left,tree,goesleft,S)
-    leafprob(x,branch.right,tree,goesright,S)
+    leafprob(x,branch.left,tree,goesleft,X_tree)
+    leafprob(x,branch.right,tree,goesright,X_tree)
 end
 
-function leafprob(x::Vector{Float64}, leaf::Leaf, tree::Tree, current_prob::Float64, S::Vector{Float64})
-    push!(S,current_prob)
+function leafprob(x::Vector{Float64}, leaf::Leaf, tree::Tree, current_prob::Float64, X_tree::Vector{Float64})
+    push!(X_tree,current_prob)
 end
 
 function leafprob(X::Matrix{Float64},bt::BartTree,bm::BartModel)
-    S::Matrix{Float64} = zeros(Float64,bm.td.n,bt.ss.number_leaves)
+    X_tree::Matrix{Float64} = zeros(Float64,bm.td.n,bt.ss.number_leaves)
     for i in 1:bm.td.n
-        S[i,:] = leafprob(X[i,:],bt.tree)
+        X_tree[i,:] = leafprob(X[i,:],bt.tree)
     end
-    S
+    X_tree
 end
 
 function leafprob(X::Matrix{Float64},tree::Tree)::Matrix{Float64}
     n::Int64 = size(X,1)
-    S::Matrix{Float64} = zeros(Float64,n,length(get_leaf_nodes(tree.root)))
+    X_tree::Matrix{Float64} = zeros(Float64,n,length(get_leaf_nodes(tree.root)))
     for i in 1:n
-        S[i,:] = leafprob(X[i,:],tree)
+        X_tree[i,:] = leafprob(X[i,:],tree)
     end
-    S
+    X_tree
 end
