@@ -1,7 +1,6 @@
 using LinearAlgebra
-
-include("bart_model.jl")
 include("tree.jl")
+include("bart_model.jl")
 include("calculating_tree_propbabilities.jl")
 include("utils.jl")
 
