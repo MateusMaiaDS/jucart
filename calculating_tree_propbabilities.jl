@@ -69,3 +69,52 @@ function leafprob(X::Matrix{Float64},tree::Tree)::Matrix{Float64}
     end
     return X_tree
 end
+
+# Functions associated with the Dirichlet prior from linero
+
+# If the arrives into a Leaf it will do nothing ( do not count in leaves)
+varcount!(leaf::Leaf,counts::Vector) = nothing
+
+# Iterating over the tree counting all the rules
+function varcount!(branch::Branch,counts::Vector)
+    var_counts[branch.split_var] += 1
+    varcount!(branch.left,var_counts)
+    varcount!(branch.right,var_counts)
+end
+
+# Count within a single tree
+function varcount(tree::Tree, bm::BartModel)
+    var_counts = zeros(bm.td.p)
+    var_counts = varcount!(tree.root,var_counts)
+    return var_counts
+end
+
+## Counting for all trees:
+function varcounts(trees::Vector{BartTree}, bm::BartModel)
+    vec(sum(reduce(hcat, [varcount(bt.tree, bm) for bt in trees]), dims = 2))
+end
+
+# Function helper to avoid numerical issues
+function log_sum_exp(x)
+    m::Float64 = maximum(x)
+    return m + log(sum(exp.(x .- m)))
+  end
+
+  
+# Updating the vector of probabilities for each covariate
+function draws!(bs::BartState, bm::BartModel)
+    
+    # Count variables for the whole forest
+    forest_vc = varcounts(bs.ensemble.trees,bm::BartModel)
+    shapes = bs.shape / bm.td.p .+ forest_vc # Recall that bs.shape is the dirichelt parameter \alpha in Linero original paper
+    y = log.(rand.(Gamma.(shapes .+ 1, 1))) # Applying the log to avoid numerical issues
+    z = log.(rand(length(shapes))) ./ shapes # Adding a uniform noise trick
+    logs = y + z
+    logs = logs .- log_sum_exp(logs) # This subtraction does the normalization
+    bs.s = logs # Logs of the probability of sampling a preditor j from p -- need to remember to exponetiate when samping a var
+end    
+
+## Sampling a var from the updated bs.s from a dirichelt from linero paper
+function sample_var(bs::BartState,bm::BartModel)
+    return sample(1:bm.td.p, weights(exp.(bs.s)))
+end

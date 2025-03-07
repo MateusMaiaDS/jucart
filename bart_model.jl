@@ -99,3 +99,5 @@ function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int6
     TrainData(n,p,x_train,y_train,xmin,xmax,xcut,ymin,ymax,σ_OLS)
 end
 
+##### sampler types
+abstract type BartState end
