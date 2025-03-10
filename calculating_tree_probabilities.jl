@@ -156,3 +156,36 @@ function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bm::BartModel)
     # ## simpler version:
     # return (rand(Uniform(lower,upper)))
 end
+## Drawing a cutpoint for the proposed split_var
+function draw_cutpoint!(branch::Branch,split_var::Int,tree::Tree,bm::BartModel)
+    lower = [bm.td.xmin[:,split_var][1]]
+    upper = [bm.td.xmax[:,split_var][1]]
+    check = branch == tree.root ? false : true # Checking if arrived the root
+    while check
+        left = isLeft(branch,tree)
+        branch = get_my_parent(branch,tree)
+        check = branch == tree.root ? false : true
+        if (branch.split_var == split_var)
+            if (left)
+                upper = push!(upper,branch.cutpoint)
+            else 
+                lower = push!(lower, branch.cutpoint)
+            end
+        end
+    end
+    lower = maximum(lower)
+    upper = minimum(upper)
+
+    # Using the xcut approach ( this is experimental using xcut, the alternative and simpler version is just a uniform sample -- commented below)
+    mask = (bm.td.xcut[:,split_var] .> lower) .& (bm.td.xcut[:,split_var] .< upper)
+
+    # Verifying if it's a valid cutpoint
+    if(!any(mask))
+        return -1.0 # Since data is always scaled there's no possible way of returning -1 (and this corresponds to an invalid node)
+    else 
+        return rand(bm.td.xcut[mask,split_var],1)[1]
+    end
+    
+    # ## simpler version:
+    # return (rand(Uniform(lower,upper)))
+end
