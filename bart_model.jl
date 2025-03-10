@@ -90,6 +90,9 @@ function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int6
     end
 
     σ_OLS = naive_sigma(x_train,y_train)
+
+    # ===  Not necessary really
+    #  This would be used 
     if usequant
         xcut = get_xcut(x_train,numcut)
     else 

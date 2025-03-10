@@ -71,7 +71,7 @@ function leafprob(X::Matrix{Float64},tree::Tree)::Matrix{Float64}
 end
 
 # Functions associated with the Dirichlet prior from linero
-
+## == start == ##
 # If the arrives into a Leaf it will do nothing ( do not count in leaves)
 varcount!(leaf::Leaf,counts::Vector) = nothing
 
@@ -116,5 +116,43 @@ end
 
 ## Sampling a var from the updated bs.s from a dirichelt from linero paper
 function sample_var(bs::BartState,bm::BartModel)
+    # Maybe need to add a conditional for the case when the Dirichlet prior isn't used 
     return sample(1:bm.td.p, weights(exp.(bs.s)))
+end
+
+## end -- linero functions
+
+## Drawing a cutpoint for the proposed split_var
+function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bm::BartModel)
+    branch = leaf
+    lower = [bm.td.xmin[:,split_var][1]]
+    upper = [bm.td.xmax[:,split_var][1]]
+    check = branch == tree.root ? false : true # Checking if arrived the root
+    while check
+        left = isLeft(branch,tree)
+        branch = get_my_parent(branch,tree)
+        check = branch == tree.root ? false : true
+        if (branch.split_var == split_var)
+            if (left)
+                upper = push!(upper,branch.cutpoint)
+            else 
+                lower = push!(lower, branch.cutpoint)
+            end
+        end
+    end
+    lower = maximum(lower)
+    upper = minimum(upper)
+
+    # Using the xcut approach ( this is experimental using xcut, the alternative and simpler version is just a uniform sample -- commented below)
+    mask = (bm.td.xcut[:,split_var] .> lower) .& (bm.td.xcut[:,split_var] .< upper)
+
+    # Verifying if it's a valid cutpoint
+    if(!any(mask))
+        return -1.0 # Since data is always scaled there's no possible way of returning -1 (and this corresponds to an invalid node)
+    else 
+        return rand(bm.td.xcut[mask,split_var],1)[1]
+    end
+    
+    # ## simpler version:
+    # return (rand(Uniform(lower,upper)))
 end
