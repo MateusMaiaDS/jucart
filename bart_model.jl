@@ -1,10 +1,18 @@
 using Distributions
 
-mutable struct SufficientStats
+mutable struct SoftSufficientStats
     number_leaves::Int
-    S::Matrix{Float64}
+    Ω::Matrix{Float64} # Who's S?
+    rhat::Vector{Float64}
+end
+
+mutable struct BartSufficientStats
+    number_leaves::Int
+    omega::Vector{Float64} # Who's S?
+    r_sum::Vector{Float64}
 
 end
+
 
     
 
@@ -12,6 +20,14 @@ struct BartTree
 
     tree::Tree
     X_tree::Matrix{Float64} # This is the matrix of indicators to represent the terminal node structure. It has dimensions n × number_leaves
+    ss::SufficientStats 
+
+end
+
+struct SoftBartTree
+
+    tree::Tree
+    S::Matrix{Float64} # This is the matrix of indicators to represent the terminal node structure. It has dimensions n × number_leaves
     ss::SufficientStats 
 
 end
@@ -75,7 +91,15 @@ struct BartModel
     mcmc::MCMC
 end
 
+mutable struct BartEnsemble
+    trees::Vector{BartTree}
+end
 
+mutable struct StandardBartState <: BartState
+    ensemble::BartEnsemble
+    fhat::Vector{Float64}
+    σ::Float64
+end
 
 function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int64,usequant::Bool)
     n = length(y_train)

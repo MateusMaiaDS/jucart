@@ -36,7 +36,7 @@ end
 # It is important to notice that this will check if the evaluated parent (starting from the root)
 # as a candidate of the node that we want to evaluate;
 function get_my_parent(node::Node, parent_candidate::Branch)
-    if (node==parent_candidate.left) || (node==parent_candidate.right)
+    if node==parent_candidate.left || node==parent_candidate.right
         return parent_candidate
     else 
         isa(get_my_parent(node,parent_candidate.left),Nothing) ? get_my_parent(node,parent_candidate.right) : get_my_parent(node,parent_candidate.left)

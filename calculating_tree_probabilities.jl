@@ -132,8 +132,8 @@ function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bm::BartModel)
         left = isLeft(branch,tree)
         branch = get_my_parent(branch,tree)
         check = branch == tree.root ? false : true
-        if (branch.split_var == split_var)
-            if (left)
+        if branch.split_var == split_var
+            if left
                 upper = push!(upper,branch.cutpoint)
             else 
                 lower = push!(lower, branch.cutpoint)
@@ -156,8 +156,10 @@ function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bm::BartModel)
     # ## simpler version:
     # return (rand(Uniform(lower,upper)))
 end
+
 ## Drawing a cutpoint for the proposed split_var
 function draw_cutpoint!(branch::Branch,split_var::Int,tree::Tree,bm::BartModel)
+    
     lower = [bm.td.xmin[:,split_var][1]]
     upper = [bm.td.xmax[:,split_var][1]]
     check = branch == tree.root ? false : true # Checking if arrived the root
@@ -165,8 +167,8 @@ function draw_cutpoint!(branch::Branch,split_var::Int,tree::Tree,bm::BartModel)
         left = isLeft(branch,tree)
         branch = get_my_parent(branch,tree)
         check = branch == tree.root ? false : true
-        if (branch.split_var == split_var)
-            if (left)
+        if branch.split_var == split_var
+            if left
                 upper = push!(upper,branch.cutpoint)
             else 
                 lower = push!(lower, branch.cutpoint)
