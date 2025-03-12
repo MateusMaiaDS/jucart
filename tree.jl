@@ -76,7 +76,7 @@ end
 
 # Function to get the depth
 function get_depth(node::Node,tree::Tree)
-    tree.root == node ? 0 : 1 + get_depth(get_my_parent(node,tree),Tree)
+    tree.root == node ? 0 : 1 + get_depth(get_my_parent(node,tree),tree)
 end
 
 function get_depth(tree::Tree)

@@ -1,10 +1,10 @@
-function suffstats(tree_residuals::Vector{Float64},X_tree::Matrix{Float64},bs::StandardBartState,bm::BartModel)
+function get_suffstats(tree_residuals::Vector{Float64},X_tree::Matrix{Float64},bs::StandardBartState,bm::BartModel)
 
     number_leaves = size(X_tree,2)
     omega = (bs.σ^(2)) ./ (sum(X_tree, dims = 1).*bm.hypers.σ_μ^2 .+ bs.σ^2) # A vector with σ²_μ/(σ²+nₗσ²_μ) for each terminal node
     r_sum = transpose(X_tree)*tree_residuals # Doing this operation is the same adding up residuals within terminal nodes ∑ᵢrᵢ
 
-    BartSufficientStats(number_leaves,omega,r_sum)
+    BartSufficientStats(number_leaves,omega[1,:],r_sum)
 end
 
 function mll(ss::BartSufficientStats,bs::StandardBartState,bm::BartModel,indexes::Int)
@@ -20,5 +20,7 @@ function mll(ss::BartSufficientStats,bs::StandardBartState,bm::BartModel,indexes
     return left + right
 
 end
+
+
 
 

@@ -1,22 +1,23 @@
 using Distributions
 
+##### sampler types
+abstract type BartState end
+
 mutable struct SoftSufficientStats
     number_leaves::Int
     Ω::Matrix{Float64} # Who's S?
     rhat::Vector{Float64}
 end
 
-mutable struct BartSufficientStats
+mutable struct BartSufficientStats <: SufficientStats
     number_leaves::Int
     omega::Vector{Float64} # Who's S?
     r_sum::Vector{Float64}
 
 end
-
-
     
 
-struct BartTree
+mutable struct BartTree
 
     tree::Tree
     X_tree::Matrix{Float64} # This is the matrix of indicators to represent the terminal node structure. It has dimensions n × number_leaves
@@ -98,7 +99,8 @@ end
 mutable struct StandardBartState <: BartState
     ensemble::BartEnsemble
     fhat::Vector{Float64}
-    σ::Float64
+    σ::Float64 # Residual standard deviation
+    s::Vector{Float64} # Vector of probability of sampling a predictor
 end
 
 function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int64,usequant::Bool)
@@ -126,5 +128,3 @@ function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int6
     TrainData(n,p,x_train,y_train,xmin,xmax,xcut,ymin,ymax,σ_OLS)
 end
 
-##### sampler types
-abstract type BartState end

@@ -4,15 +4,16 @@ function get_prob_non_terminal(depth::Int64, bm::BartModel)
 end
 
 # Probability ratio from a MH step from a GROW move ( no node to calculate the whole tree)
-function get_log_prob_grow_leaf(depth::Int64, bm::BartModel)
+function get_log_prob_grow_leaf_ratio(leaf::Node,tree::Tree, bm::BartModel)
 
+    depth = get_depth(leaf,tree)
     prob_selected_leaf_nonterminal::Float64 = get_prob_non_terminal(depth,bm) # Calculate here before to avoid calculate twice later
     return (log(prob_selected_leaf_nonterminal)+ 2*log(1-get_prob_non_terminal((depth+1),bm))) - log(1-prob_selected_leaf_nonterminal)
 
 end
 
 # Probability ratio from a MH step from a PRUNE move ( no node to calculate the whole tree)
-function get_log_prob_prune_node(depth::Int64, bm::BartModel)
+function get_log_prob_prune_node_ratio(depth::Int64, bm::BartModel)
 
     prob_selected_node_nonterminal::Float64 = get_prob_non_terminal(depth,bm) # Calculate here before to avoid calculate twice later
 
@@ -20,13 +21,41 @@ function get_log_prob_prune_node(depth::Int64, bm::BartModel)
 end
 
 
+## Transition probabilities
+function sample_grow_prob(tree::Tree)
+    isa(tree.root,Leaf) ? 1.0 : (1/3) # Probability of Grow is 1/3 
+end
+
+function sample_grow_prob(X_tree::Matrix{Float64})
+    size(X_tree,2)==1 ? 1.0 : (1/3) # Probability of Grow is 1/3 
+end
+
+function sample_prune_prob(tree::Tree)
+    isa(tree.root,Leaf) ? 0.0 : (1/3) # Probability of Prune is 1/3 
+end
+
+function sample_prune_prob(X_tree::Matrix{Float64})
+    size(X_tree,2)==1 ? 0.0 : (1/3) # Probability of Prune is 1/3 
+end
+
+
+## The log ratio of the transition probabilities for a birth proposal
+function get_log_grow_trans_ratio(bart_tree::BartTree, S_prime::Matrix{Float64})
+    # Probability of transitioning from proposed Tree back to the current Tree
+    numr = (1 - sample_prune_prob(S_prime)) / (length(search_onlyparents(bart_tree.tree)) + 1)
+    # Probability of transitioning from the current Tree to the proposed Tree
+    denomr = sample_grow_prob(bart_tree.tree) / bart_tree.ss.number_leaves
+    log(numr) - log(denomr)
+  end
+  
+
 # Getting the probability of going to left (here we have hard-boundaries yet so it will be assigned one)
 function probleft(x::Vector{Float64},branch::Branch)
-    x[branch.split_var]<= branch.cutpoint ? 1.0 : 0.0
+    x[branch.split_var] <= branch.cutpoint ? 1.0 : 0.0
 end
 
 function probleft(X::Matrix{Float64},branch::Branch)
-    ifelse.(X[:,branch.split_var]<= branch.cutpoint ? 1.0 : 0.0)
+    Float64.(X[:,branch.split_var] .<= branch.cutpoint )
 end
 
 

@@ -4,15 +4,18 @@ include("tree.jl")
 include("bart_model.jl")
 include("calculating_tree_probabilities.jl")
 include("utils.jl")
-import Random
+include("tree_moves.jl")
+include("mcmc_calculations.jl")
+using Random
+using StatsBase
 Random.seed!(42)
 
 # Sample data
-n_ = 10000
+n_ = 5
 x  = rand(n_,2)
 y = 5 .+ 2 .*x[:,1] .+ randn(n_)              # Response vector#
 y = reshape(y, :, 1)        # Explicitly reshape y into a 4x1 matrix
-
+tree_resid = rand(n_)
 td_::TrainData = TrainData(x,y,100,false)
 hypers_::Hypers =  Hypers(td_)
 mcmc_::MCMC = MCMC()
@@ -20,3 +23,18 @@ mcmc_::MCMC = MCMC()
 
 bm_::BartModel = BartModel(hypers_,td_,mcmc_)
 
+# This code initialises what would be an example of a BART fitted model 
+
+
+root = Branch(1,0.5,Branch(1,td_.xcut[3,1],Leaf(0.0),Leaf(0.0)),Leaf(0.0))
+tree = Tree(root)
+matrix_test = leafprob(x,tree)
+ss_bart = BartSufficientStats(3,[1.0, 1.0, 1.0],[0.0,0.0,0.0])
+bart_tree = BartTree(tree,matrix_test,ss_bart)
+bart_ensemble_ = BartEnsemble([bart_tree])
+
+std_bart_state_ = StandardBartState(bart_ensemble_,tree_resid,1.0,[0.5,0.5])
+
+# std_bart_state_ = StandardBartState(undef)
+# ss_bart::BartSufficientStats = suffstats(b)
+grow_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
