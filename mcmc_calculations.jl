@@ -7,7 +7,7 @@ function suffstats(tree_residuals::Vector{Float64},X_tree::Matrix{Float64},bs::S
     BartSufficientStats(number_leaves,omega,r_sum)
 end
 
-function mll(ss::BartSufficientStats,bs::StandardBartState,bm::BartModel,index::Int)
+function mll(ss::BartSufficientStats,bs::StandardBartState,bm::BartModel,indexes::Int)
     return -0.5*log(2*pi*bm.hypers.σ_μ^2)+0.5*log(bs.σ/ss.omega[indexes])+0.5*(ss.r_sum[indexes]^2)/(bs.σ*ss.omega[indexes])
 end
 
