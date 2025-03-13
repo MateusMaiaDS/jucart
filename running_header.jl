@@ -26,15 +26,21 @@ bm_::BartModel = BartModel(hypers_,td_,mcmc_)
 # This code initialises what would be an example of a BART fitted model 
 
 
-root = Branch(1,0.5,Branch(1,td_.xcut[3,1],Leaf(0.0),Leaf(0.0)),Leaf(0.0))
+root = Leaf(0.0)
 tree = Tree(root)
-matrix_test = leafprob(x,tree)
-ss_bart = BartSufficientStats(3,[1.0, 1.0, 1.0],[0.0,0.0,0.0])
+matrix_test = reshape(ones(n_),:,1)
+ss_bart = BartSufficientStats(1,[0.0],[0.0])
 bart_tree = BartTree(tree,matrix_test,ss_bart)
 bart_ensemble_ = BartEnsemble([bart_tree])
+
 
 std_bart_state_ = StandardBartState(bart_ensemble_,tree_resid,1.0,[0.5,0.5])
 
 # std_bart_state_ = StandardBartState(undef)
 # ss_bart::BartSufficientStats = suffstats(b)
+print(bart_tree.ss.number_leaves)
 grow_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
+print(bart_tree.ss.number_leaves)
+prune_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
+print(bart_tree.ss.number_leaves)
+# prune_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)

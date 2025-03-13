@@ -49,28 +49,28 @@ function get_my_parent(node::Node, parent_candidate::Leaf)
 end
 
 # Initialise the search of onlyparents for a tree
-function search_onlyparents(tree::Tree)
+function get_onlyparents(tree::Tree)
     branches = Branch[]
     if isa(tree.root,Leaf) 
         return [tree.root] # Check this latter for me it would need to call nothing as there is no parents to search
                            # --- in this case it will always return at least a root when this function is called.
     else 
-        search_onlyparents(tree.root,branches)
+        get_onlyparents(tree.root,branches)
     end
 end
 
 # Extremely intuitive, keep search for only parents nodes if there is always a branch
-function search_onlyparents(branch::Branch,branches::Vector{Branch})
+function get_onlyparents(branch::Branch,branches::Vector{Branch})
     if isa(branch.left,Leaf) && isa(branch.right,Leaf)
         push!(branches,branch)
     else 
-        search_onlyparents(branch.left,branches)
-        search_onlyparents(branch.right,branches)
+        get_onlyparents(branch.left,branches)
+        get_onlyparents(branch.right,branches)
     end 
     return branches
 end
 
-function search_onlyparents(leaf::Leaf,branches::Vector{Branch}) 
+function get_onlyparents(leaf::Leaf,branches::Vector{Branch}) 
     return nothing
 end
 

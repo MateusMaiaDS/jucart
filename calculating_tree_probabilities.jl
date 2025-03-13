@@ -13,11 +13,13 @@ function get_log_prob_grow_leaf_ratio(leaf::Node,tree::Tree, bm::BartModel)
 end
 
 # Probability ratio from a MH step from a PRUNE move ( no node to calculate the whole tree)
-function get_log_prob_prune_node_ratio(depth::Int64, bm::BartModel)
+function get_log_prob_prune_branch_ratio(branch::Branch, bm::BartModel,tree::Tree)
 
-    prob_selected_node_nonterminal::Float64 = get_prob_non_terminal(depth,bm) # Calculate here before to avoid calculate twice later
+    depth = get_depth(branch,tree)
 
-    return log(1-prob_selected_leaf_nonterminal) - (log(prob_selected_node_nonterminal) + 2*log(1-get_prob_non_terminal(depth+1,bm))) 
+    prob_selected_branch_nonterminal::Float64 = get_prob_non_terminal(depth,bm) # Calculate here before to avoid calculate twice later
+
+    return log(1-prob_selected_branch_nonterminal) - (log(prob_selected_branch_nonterminal) + 2*log(1-get_prob_non_terminal(depth+1,bm))) 
 end
 
 
@@ -39,14 +41,23 @@ function sample_prune_prob(X_tree::Matrix{Float64})
 end
 
 
+function get_log_prune_trans_ratio(bart_tree::BartTree, X_tree_prime::Matrix{Float64})
+    
+    # Probability of transitioning from the Proposed tree to the original (i.e: from the Grown tree to the pruned)
+    numr = (isa(bart_tree.tree.root,Leaf) ? 1.0 : (1/3)) / (bart_tree.ss.number_leaves-1) # Remember that the prune is not applied on the root-only tree so this denominator cannot be zero
+    denomr = sample_prune_prob(X_tree_prime) / (length(search_onlyparents(bart_tree.tree)))
+
+    log(numr) - log(denomr)
+end
+
 ## The log ratio of the transition probabilities for a birth proposal
-function get_log_grow_trans_ratio(bart_tree::BartTree, S_prime::Matrix{Float64})
+function get_log_grow_trans_ratio(bart_tree::BartTree, X_tree_prime::Matrix{Float64})
     # Probability of transitioning from proposed Tree back to the current Tree
-    numr = (1 - sample_prune_prob(S_prime)) / (length(search_onlyparents(bart_tree.tree)) + 1)
+    numr = sample_prune_prob(X_tree_prime) / (length(search_onlyparents(bart_tree.tree))) # The it would be length(search_onlyparents(bart_tree.tree)+1) only if Grow a node that create a symmetrical tree
     # Probability of transitioning from the current Tree to the proposed Tree
     denomr = sample_grow_prob(bart_tree.tree) / bart_tree.ss.number_leaves
     log(numr) - log(denomr)
-  end
+end
   
 
 # Getting the probability of going to left (here we have hard-boundaries yet so it will be assigned one)
