@@ -71,7 +71,7 @@ function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs:
 
     logratio = mloglikratio + treeratio + transratio
 
-    if log(rand()) < 100.0
+    if log(rand()) < logratio
         # bart_tree.tree = new_tree # Old version, with proper transition
         birth_leaf!(leaf,bart_tree.tree,branch) # Old version, with wrong transition
         bart_tree.X_tree = X_tree_prime
@@ -129,7 +129,7 @@ function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs
     transratio = get_log_prune_trans_ratio(bart_tree,X_tree_prime)
     logratio = mloglikratio + treeratio + transratio
 
-    if log(rand()) < 1000
+    if log(rand()) < logratio
         death_branch!(branch,bart_tree.tree)
         bart_tree.X_tree = X_tree_prime
         bart_tree.ss = ss_prime
