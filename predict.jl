@@ -18,3 +18,4 @@ function StatsBase.predict(bart_state::BartState,bm::BartModel)
 
     return fhat
 end
+

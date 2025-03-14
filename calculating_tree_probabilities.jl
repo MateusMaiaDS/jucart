@@ -40,6 +40,15 @@ function sample_prune_prob(X_tree::Matrix{Float64})
     size(X_tree,2)==1 ? 0.0 : (1/3) # Probability of Prune is 1/3 
 end
 
+function sample_change_prob(tree::Tree)
+    isa(tree.root,Leaf) ? 0.0 : (1/3) # Probability of Prune is 1/3 
+end
+
+function sample_change_prob(X_tree::Matrix{Float64})
+    size(X_tree,2)==1 ? 0.0 : (1/3) # Probability of Prune is 1/3 
+end
+
+
 
 function get_log_prune_trans_ratio(bart_tree::BartTree, X_tree_prime::Matrix{Float64})
     
@@ -142,22 +151,22 @@ function log_sum_exp(x)
 
   
 # Updating the vector of probabilities for each covariate
-function draws!(bs::BartState, bm::BartModel)
+function draws!(bart_state::BartState, bm::BartModel)
     
     # Count variables for the whole forest
-    forest_vc = varcounts(bs.ensemble.trees,bm::BartModel)
-    shapes = bs.shape / bm.td.p .+ forest_vc # Recall that bs.shape is the dirichelt parameter \alpha in Linero original paper
+    forest_vc = varcounts(bart_state.ensemble.trees,bm::BartModel)
+    shapes = bart_state.shape / bm.td.p .+ forest_vc # Recall that bart_state.shape is the dirichelt parameter \alpha in Linero original paper
     y = log.(rand.(Gamma.(shapes .+ 1, 1))) # Applying the log to avoid numerical issues
     z = log.(rand(length(shapes))) ./ shapes # Adding a uniform noise trick
     logs = y + z
     logs = logs .- log_sum_exp(logs) # This subtraction does the normalization
-    bs.s = logs # Logs of the probability of sampling a preditor j from p -- need to remember to exponetiate when samping a var
+    bart_state.s = logs # Logs of the probability of sampling a preditor j from p -- need to remember to exponetiate when samping a var
 end    
 
-## Sampling a var from the updated bs.s from a dirichelt from linero paper
-function sample_var(bs::BartState,bm::BartModel)
+## Sampling a var from the updated bart_state.s from a dirichelt from linero paper
+function sample_var(bart_state::BartState,bm::BartModel)
     # Maybe need to add a conditional for the case when the Dirichlet prior isn't used 
-    return sample(1:bm.td.p, weights(exp.(bs.s)))
+    return sample(1:bm.td.p, weights(exp.(bart_state.s)))
 end
 
 ## end -- linero functions

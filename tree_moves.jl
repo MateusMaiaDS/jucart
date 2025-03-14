@@ -17,17 +17,16 @@ function birth_leaf!(leaf::Leaf,tree::Tree,branch::Branch)
 end
 
 # Growing a node
-function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs::BartState,bm::BartModel)
+function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bart_state::BartState,bart_model::BartModel)
 
     leaves::Vector{Node} = get_leaf_nodes(bart_tree.tree.root)
     index = rand(1:length(leaves))
     leaf = leaves[index]
 
-    new_variable = sample_var(bs,bm)
-
-    new_cutpoint = draw_cutpoint!(leaf,new_variable,tree,bm)
+    new_variable = sample_var(bart_state,bart_model)
+    new_cutpoint = draw_cutpoint!(leaf,new_variable,tree,bart_model)
     # Updating the sufficent statistics of the current tree
-    bart_tree.ss = get_suffstats(tree_residuals,bart_tree.X_tree,bs,bm)
+    bart_tree.ss = get_suffstats(tree_residuals,bart_tree.X_tree,bart_state,bart_model)
 
     # Ending funcion for invalid grow
     if new_cutpoint==-1
@@ -36,7 +35,7 @@ function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs:
 
     branch = Branch(new_variable,new_cutpoint,Leaf(0.0),Leaf(0.0))
 
-    goesleft = bart_tree.X_tree[:,index] .* probleft(bm.td.x_train,branch)
+    goesleft = bart_tree.X_tree[:,index] .* probleft(bart_model.td.x_train,branch)
     goesright = bart_tree.X_tree[:,index] .- goesleft
 
 
@@ -50,15 +49,15 @@ function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs:
         indexes = [1, 2]
     else
         indexes = [index, index + 1]
-        X_tree_prime = zeros(bm.td.n,length(leaves)+1)
+        X_tree_prime = zeros(bart_model.td.n,length(leaves)+1)
         X_tree_prime[:,indexes] = hcat(goesleft,goesright)
         X_tree_prime[:,setdiff(1:end,indexes)] = bart_tree.X_tree[:,setdiff(1:end,index)] # This is the easiest way to add new columns from the old one, as the index can be at any position not only on the end
     end
 
-    ss_prime = get_suffstats(tree_residuals,X_tree_prime,bs,bm)
-    mloglikratio = mll(ss_prime,bs,bm,indexes) - mll(bart_tree.ss,bs,bm,index) # Here is the key difference, because we are in BART, actually there's only a change on the index and indexes columns otherwise we would need to iterate over all columns
-    # mloglikratio = mll(tree_residuals,X_tree_prime,bs,bm) - mll(tree_residuals,tree.X_tree,bs,bm) # SoftBART version
-    treeratio = get_log_prob_grow_leaf_ratio(leaf,bart_tree.tree,bm)
+    ss_prime = get_suffstats(tree_residuals,X_tree_prime,bart_state,bart_model)
+    mloglikratio = mll(ss_prime,bart_state,bart_model,indexes) - mll(bart_tree.ss,bart_state,bart_model,index) # Here is the key difference, because we are in BART, actually there's only a change on the index and indexes columns otherwise we would need to iterate over all columns
+    # mloglikratio = mll(tree_residuals,X_tree_prime,bart_state,bart_model) - mll(tree_residuals,tree.X_tree,bart_state,bart_model) # SoftBART version
+    treeratio = get_log_prob_grow_leaf_ratio(leaf,bart_tree.tree,bart_model)
     
     # This step to have a proper calculation of the transition rate as the numerator can only use information from number of nogs of the new tree
     # new_tree = deepcopy(bart_tree.tree)
@@ -97,12 +96,12 @@ end
 
 
 # Growing a node
-function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs::BartState,bm::BartModel)
+function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bart_state::BartState,bart_model::BartModel)
 
 
     # Updating the sufficent statistics of the current tree
     # (need to update in any case as they are used to sample \mu)
-    bart_tree.ss = get_suffstats(tree_residuals,bart_tree.X_tree,bs,bm)
+    bart_tree.ss = get_suffstats(tree_residuals,bart_tree.X_tree,bart_state,bart_model)
     leaves::Vector{Node} = get_leaf_nodes(bart_tree.tree.root)
     index = rand(1:length(leaves))
     leaf = leaves[index]
@@ -121,10 +120,10 @@ function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs
     X_tree_prime = X_tree_prime[:,1:end .!= indexes[2]]
 
     
-    ss_prime = get_suffstats(tree_residuals,X_tree_prime,bs,bm)
-    mloglikratio = mll(ss_prime,bs,bm,indexes[1]) - mll(bart_tree.ss,bs,bm,indexes) # Here is the key difference, because we are in BART, actually there's only a change on the index and indexes columns otherwise we would need to iterate over all columns
-    # mloglikratio = mll(tree_residuals,X_tree_prime,bs,bm) - mll(tree_residuals,tree.X_tree,bs,bm) # SoftBART version
-    treeratio = get_log_prob_prune_branch_ratio(branch,bm,bart_tree.tree)
+    ss_prime = get_suffstats(tree_residuals,X_tree_prime,bart_state,bart_model)
+    mloglikratio = mll(ss_prime,bart_state,bart_model,indexes[1]) - mll(bart_tree.ss,bart_state,bart_model,indexes) # Here is the key difference, because we are in BART, actually there's only a change on the index and indexes columns otherwise we would need to iterate over all columns
+    # mloglikratio = mll(tree_residuals,X_tree_prime,bart_state,bart_model) - mll(tree_residuals,tree.X_tree,bart_state,bart_model) # SoftBART version
+    treeratio = get_log_prob_prune_branch_ratio(branch,bart_model,bart_tree.tree)
     transratio = get_log_prune_trans_ratio(bart_tree,X_tree_prime)
     logratio = mloglikratio + treeratio + transratio
 
@@ -135,13 +134,69 @@ function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs
     end
 end
 
-# Updating the μ
-function draw_μ!(bart_tree::BartTree,bs::BartState)
+function change_branch!(branch::Branch,tree::Tree,new_split_var::Int64,new_cutpoint::Float64)
     
-    leaves = get_leaf_nodes(bart_tree.tree.root)
+    if tree.root == branch
+        tree.root.split_var = new_split_var
+        tree.root.cutpoint = new_cutpoint
+    else 
+        parent_node = get_my_parent(branch,tree)
 
-    for i in 1:length(leaves)
-        leaves[i].μ = rand(Normal(bart_tree.ss.omega[i]*bart_tree.ss.r_sum[i],sqrt(bs.σ*bart_tree.ss.omega[i])),1)[1]
+        if parent_node.left == branch
+            parent_node.left.split_var = new_split_var
+            parent_node.left.cutpoint = new_cutpoint
+        else parent_node.right == branch 
+            parent_node.right.split_var = new_split_var
+            parent_node.right.cutpoint = new_cutpoint
+        end 
+    end 
+
+end
+
+# Adding the change verb
+function change_proposal!(bart_tree::BartTree,tree_residuals::Vector{Float64},bart_state::BartState,bart_model::BartModel)
+
+    bart_tree.ss = get_suffstats(tree_residuals,bart_tree.X_tree,bart_state,bart_model)
+
+    leaves::Vector{Node} = get_leaf_nodes(bart_tree.tree.root)
+    index = rand(1:length(leaves))
+    leaf = leaves[index]
+    leaf_isleft = isLeft(leaf,bart_tree.tree)
+    
+    if leaf_isleft
+        indexes = [index, index + 1 ]
+    else 
+        indexes = [index - 1, index]
+    end
+
+    branch = get_my_parent(leaf,bart_tree.tree)
+
+    new_variable = sample_var(bart_state,bart_model)
+    new_cutpoint = draw_cutpoint!(branch,new_variable,tree,bart_model)
+
+    new_branch = deepcopy(branch)
+    new_branch.split_var = new_variable
+    new_branch.cutpoint = new_cutpoint
+
+    X_tree_parent = sum(bart_tree.X_tree[:,indexes],dims = 2)[:,1]
+    goesleft = X_tree_parent .* probleft(bart_model.td.x_train,new_branch)
+    goesright = X_tree_parent .- goesleft
+
+    X_tree_prime = copy(bart_tree.X_tree)
+    X_tree_prime[:,indexes] = hcat(goesleft,goesright)
+
+    ss_prime = get_suffstats(tree_residuals,X_tree_prime,bart_state,bart_model)
+
+    mloglikratio = mll(ss_prime,bart_state,bart_model,indexes) - mll(bart_tree.ss,bart_state,bart_model,indexes) # Here is the key difference, because we are in BART, actually there's only a change on the index and indexes columns otherwise we would need to iterate over all columns
+   
+    logratio = mloglikratio 
+
+    if log(rand()) < logratio
+        # Unnecessary navigation over the tree (old-version): # change_branch!(branch,bart_tree.tree,new_variable,new_cutpoint)
+        branch.split_var = new_variable
+        branch.cutpoint = new_cutpoint
+        bart_tree.X_tree = X_tree_prime
+        bart_tree.ss = ss_prime
     end
 
 end

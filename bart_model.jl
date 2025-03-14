@@ -68,12 +68,12 @@ struct Hypers
     σ_μ::Float64
     q::Float64
     ν::Float64
-    λ::Float64
+    δ::Float64
 
     function Hypers(td::TrainData; m = 200,α = 0.95, β = 2.0,k = 2.0, q = 0.9,ν = 3)
 
         # Quicker and clever way of obtaing
-        λ = 1/quantile(InverseGamma(ν/2,ν/(2*td.σ_OLS^2)),q)
+        δ = 1/quantile(InverseGamma(ν/2,ν/(2*td.σ_OLS^2)),q)
 
         if isa(td.y_train,Matrix{Int})
             σ_μ = sqrt(9/(m*k^2))
@@ -81,7 +81,7 @@ struct Hypers
             σ_μ = sqrt((maximum(td.y_train)-minimum(td.y_train))/(4*m*k^2))
         end
                 
-        new(m,α,β,k,σ_μ,q,ν,λ)
+        new(m,α,β,k,σ_μ,q,ν,δ)
     end              
 end
 
