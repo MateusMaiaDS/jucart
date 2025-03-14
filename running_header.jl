@@ -1,13 +1,14 @@
 using LinearAlgebra
 using Statistics
+using StatsBase
+using Random
 include("tree.jl")
 include("bart_model.jl")
 include("calculating_tree_probabilities.jl")
 include("utils.jl")
 include("tree_moves.jl")
 include("mcmc_calculations.jl")
-using Random
-using StatsBase
+include("predict.jl")
 Random.seed!(42)
 
 # Sample data
@@ -41,6 +42,7 @@ std_bart_state_ = StandardBartState(bart_ensemble_,tree_resid,1.0,[0.5,0.5])
 print(bart_tree.ss.number_leaves)
 grow_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
 print(bart_tree.ss.number_leaves)
-prune_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
+# prune_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
+draw_μ!(bart_tree,std_bart_state_)
 print(bart_tree.ss.number_leaves)
 # prune_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)

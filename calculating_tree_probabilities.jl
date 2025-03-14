@@ -45,7 +45,7 @@ function get_log_prune_trans_ratio(bart_tree::BartTree, X_tree_prime::Matrix{Flo
     
     # Probability of transitioning from the Proposed tree to the original (i.e: from the Grown tree to the pruned)
     numr = (isa(bart_tree.tree.root,Leaf) ? 1.0 : (1/3)) / (bart_tree.ss.number_leaves-1) # Remember that the prune is not applied on the root-only tree so this denominator cannot be zero
-    denomr = sample_prune_prob(X_tree_prime) / (length(search_onlyparents(bart_tree.tree)))
+    denomr = sample_prune_prob(X_tree_prime) / (length(get_onlyparents(bart_tree.tree)))
 
     log(numr) - log(denomr)
 end
@@ -53,7 +53,7 @@ end
 ## The log ratio of the transition probabilities for a birth proposal
 function get_log_grow_trans_ratio(bart_tree::BartTree, X_tree_prime::Matrix{Float64})
     # Probability of transitioning from proposed Tree back to the current Tree
-    numr = sample_prune_prob(X_tree_prime) / (length(search_onlyparents(bart_tree.tree))) # The it would be length(search_onlyparents(bart_tree.tree)+1) only if Grow a node that create a symmetrical tree
+    numr = sample_prune_prob(X_tree_prime) / (length(get_onlyparents(bart_tree.tree))) # The it would be length(search_onlyparents(bart_tree.tree)+1) only if Grow a node that create a symmetrical tree
     # Probability of transitioning from the current Tree to the proposed Tree
     denomr = sample_grow_prob(bart_tree.tree) / bart_tree.ss.number_leaves
     log(numr) - log(denomr)

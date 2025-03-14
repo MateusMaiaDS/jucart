@@ -93,7 +93,7 @@ struct BartModel
 end
 
 mutable struct BartEnsemble
-    trees::Vector{BartTree}
+    bart_trees::Vector{BartTree}
 end
 
 mutable struct StandardBartState <: BartState

@@ -66,7 +66,6 @@ function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs:
     # transratio = get_log_grow_trans_ratio(new_tree,bart_tree,X_tree_prime)
     ### But this is skipped for computational purposes and assume the approximation of being equal to nogs of the current tree (it could also be nogs+1)
 
-
     transratio = get_log_grow_trans_ratio(bart_tree,X_tree_prime) # No need to make a copy for the new tree, if using the older version
 
     logratio = mloglikratio + treeratio + transratio
@@ -135,3 +134,15 @@ function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bs
         bart_tree.ss = ss_prime
     end
 end
+
+# Updating the μ
+function draw_μ!(bart_tree::BartTree,bs::BartState)
+    
+    leaves = get_leaf_nodes(bart_tree.tree.root)
+
+    for i in 1:length(leaves)
+        leaves[i].μ = rand(Normal(bart_tree.ss.omega[i]*bart_tree.ss.r_sum[i],sqrt(bs.σ*bart_tree.ss.omega[i])),1)[1]
+    end
+
+end
+
