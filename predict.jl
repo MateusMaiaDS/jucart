@@ -19,3 +19,14 @@ function StatsBase.predict(bart_state::BartState,bm::BartModel)
     return fhat
 end
 
+# Predicting from a set of trees and X_tree
+function StatsBase.predict(trees::Vector{Tree},X_matrix::Matrix{Float64})
+
+    f_hat = zeros(Float64,size(X_matrix,1))
+
+    for tree in trees
+        f_hat += leafprob(X_matrix,tree)*get_μ(tree)
+    end
+
+    return f_hat
+end

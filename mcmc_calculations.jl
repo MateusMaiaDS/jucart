@@ -64,12 +64,10 @@ end
 function draw_trees!(bart_state::BartState,bart_model::BartModel)
 
     for bart_tree in bart_state.ensemble.trees
-
         fhat_without_current_tree = bart_state.fhat .- predict(bart_tree)
         tree_residuals = bart_model.td.y_train - fhat_without_current_tree
         draw_tree!(bart_tree,tree_residuals,bart_state,bart_model)
         draw_μ!(bart_tree,bart_state)
         bs.fhat = bs.fhat + predict(bayes_tree)
-
     end
 end

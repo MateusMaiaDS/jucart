@@ -49,19 +49,18 @@ end
 struct MCMC
     niter::Int64
     nburn::Int64
-    nchain::Int64
+    nchains::Int64
     nthin::Int64
-    npost::Int64
 
-    function MCMC(;niter = 2500, nburn = 500, nchain = 1, nthin = 1)
-        new(niter,nburn,nchain,nthin,niter-nburn)
+    function MCMC(;niter = 2500, nburn = 500, nchains = 1, nthin = 1)
+        new(niter,nburn,nchains,nthin,niter-nburn)
     end
 
 end
 
 
 struct Hypers
-    m::Int64
+    m::Int64 # Number of trees
     α::Float64
     β::Float64
     k::Float64
@@ -92,6 +91,13 @@ struct BartModel
     mcmc::MCMC
 end
 
+# Need to buiild a constructor for BartModel
+function BartModel(X_train::Matrix{Float64},y::AbstractVector,mcmc::MCMC;hyperargs...)
+    td = TrainData(X_train,y_train; hyperargs...)
+    hypers = Hypers(td;hyperargs...)
+    BartModel(hypers,td,mcmc)
+end
+
 mutable struct BartEnsemble
     bart_trees::Vector{BartTree}
 end
@@ -102,6 +108,19 @@ mutable struct StandardBartState <: BartState
     σ::Float64 # Residual standard deviation
     s::Vector{Float64} # Vector of probability of sampling a predictor
 end
+
+function StandardBartState(bart_model::BartModel)
+
+    ## Need to flexbilize for multiple chains
+    
+    # Initializing the StandardBartState
+    bart_trees = [BartTree(Tree(Leaf(0.0)),ones(Float64,bart_model.td.n,1),BartSufficientStats(1,ones(Float64,1),zeros(Float64,1))) for _ in 1:bart_model.hypers.m]
+    init_f_hat = zeros(Float64,bart_model.td.n)
+
+    return StandardBartState(bart_trees,init_f_hat,bart_model.td.σ_OLS,fill(1/bart_model.td.p,bart_model.td.p))
+
+end
+
 
 function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int64,usequant::Bool)
     n = length(y_train)
