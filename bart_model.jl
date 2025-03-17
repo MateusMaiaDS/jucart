@@ -74,7 +74,7 @@ struct Hypers
         # Quicker and clever way of obtaing
         δ = 1/quantile(InverseGamma(ν/2,ν/(2*td.σ_OLS^2)),q)
 
-        if isa(td.y_train,Matrix{Int})
+        if isa(td.y_train,Vector{Int64})
             σ_μ = sqrt(9/(m*k^2))
         else 
             σ_μ = sqrt((maximum(td.y_train)-minimum(td.y_train))/(4*m*k^2))
