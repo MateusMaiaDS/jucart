@@ -2,15 +2,23 @@ function scale_X!(x_train::Matrix{Float64},xmin::Matrix{Float64},xmax::Matrix{Fl
     x_train .= (x_train.-xmin)./(xmax .- xmin)
 end
 
-function normalize_y!(y_train::Matrix{Float64}, ymin::Float64,ymax::Float64)
+function normalize_y!(y_train::Matrix{Float64}, ymin::Vector{Float64},ymax::Vector{Float64})
     y_train .= (y_train .- ymin)./(ymax.-ymin) .- 0.5
 end
 
-function unnormalize_y!(y_train::Matrix{Float64}, ymin::Float64,ymax::Float64)
+function unnormalize_y!(y_train::Matrix{Float64}, ymin::Vector{Float64},ymax::Vector{Float64})
     y_train .= (ymax.-ymin).*(y_train .+ 0.5)./ .- ymin
 end
 
-function naive_sigma(x_train::Matrix{Float64},y_train::Matrix{Float64})
+function normalize_y!(y_train::Vector{Float64}, ymin::Float64,ymax::Float64)
+    y_train .= (y_train .- ymin)./(ymax.-ymin) .- 0.5
+end
+
+function unnormalize_y!(y_train::Vector{Float64}, ymin::Float64,ymax::Float64)
+    y_train .= (ymax.-ymin).*(y_train .+ 0.5)./ .- ymin
+end
+
+function naive_sigma(x_train::Matrix{Float64},y_train::Vector{Float64})
 
     n_  = size(x_train,1)
     p_ = size(x_train,2)

@@ -9,13 +9,13 @@ include("utils.jl")
 include("tree_moves.jl")
 include("mcmc_calculations.jl")
 include("predict.jl")
+include("bart_main_function.jl")
 Random.seed!(42)
 
 # Sample data
 n_ = 5
 x  = rand(n_,2)
 y = 5 .+ 2 .*x[:,1] .+ randn(n_)              # Response vector#
-y = reshape(y, :, 1)        # Explicitly reshape y into a 4x1 matrix
 tree_resid = rand(n_)
 td_::TrainData = TrainData(x,y,100,false)
 hypers_::Hypers =  Hypers(td_)

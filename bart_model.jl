@@ -37,7 +37,7 @@ struct TrainData
     n::Int64
     p::Int64
     x_train::Matrix{Float64}
-    y_train::AbstractMatrix
+    y_train::AbstractVector
     xmin::Matrix{Float64}
     xmax::Matrix{Float64}
     xcut::Matrix{Float64}
@@ -53,7 +53,7 @@ struct MCMC
     nthin::Int64
 
     function MCMC(;niter = 2500, nburn = 500, nchains = 1, nthin = 1)
-        new(niter,nburn,nchains,nthin,niter-nburn)
+        new(niter,nburn,nchains,nthin)
     end
 
 end
@@ -92,8 +92,8 @@ struct BartModel
 end
 
 # Need to buiild a constructor for BartModel
-function BartModel(X_train::Matrix{Float64},y::AbstractVector,mcmc::MCMC;hyperargs...)
-    td = TrainData(X_train,y_train; hyperargs...)
+function BartModel(X_train::Matrix{Float64},y_train::AbstractVector,mcmc::MCMC,numcut::Int64,usequant::Bool;hyperargs...)
+    td = TrainData(X_train,y_train,numcut,usequant)
     hypers = Hypers(td;hyperargs...)
     BartModel(hypers,td,mcmc)
 end
@@ -122,7 +122,7 @@ function StandardBartState(bart_model::BartModel)
 end
 
 
-function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int64,usequant::Bool)
+function TrainData(x_train::Matrix{Float64},y_train::AbstractVector,numcut::Int64,usequant::Bool)
     n = length(y_train)
     p = size(x_train,2)
     xmin = minimum(x_train,dims = 1)
@@ -130,7 +130,7 @@ function TrainData(x_train::Matrix{Float64},y_train::AbstractMatrix,numcut::Int6
     ymin = minimum(y_train)
     ymax = maximum(y_train)
     scale_X!(x_train,xmin,xmax)
-    if isa(y_train,Matrix{Float64})
+    if isa(y_train,Vector{Float64})
         normalize_y!(y_train,ymin,ymax)
     end
 

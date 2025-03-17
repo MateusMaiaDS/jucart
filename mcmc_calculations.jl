@@ -7,6 +7,8 @@ function get_suffstats(tree_residuals::Vector{Float64},X_tree::Matrix{Float64},b
     BartSufficientStats(number_leaves,omega[1,:],r_sum)
 end
 
+
+
 function mll(ss::BartSufficientStats,bart_state::StandardBartState,bm::BartModel,indexes::Int)
     return -0.5*log(2*pi*bm.hypers.σ_μ^2)+0.5*log(bart_state.σ/ss.omega[indexes])+0.5*(ss.r_sum[indexes]^2)/(bart_state.σ*ss.omega[indexes])
 end
