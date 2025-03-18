@@ -12,7 +12,7 @@ function StatsBase.fit(BartModel,X_train::Matrix{Float64}, y_train::Vector{Float
     all_bart_states = Vector{StandardBartState}(undef,bart_model.mcmc.niter)
     fhat_post = zeros(Float64,bart_model.mcmc.niter-bart_model.mcmc.nburn,bart_model.td.n)
     post_iter = 1
-    for i in 1:1
+    for i in 1:bart_model.mcmc.niter
         draw_trees!(bart_state,bart_model)
         draw_s!(bart_state,bart_model)
         draw_σ!(bart_state,bart_model)

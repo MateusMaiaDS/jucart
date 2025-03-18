@@ -115,7 +115,7 @@ function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},ba
 
     branch = get_my_parent(leaf,bart_tree.tree)
 
-    X_tree_prime = copy(bart_tree.X_tree)
+    X_tree_prime = deepcopy(bart_tree.X_tree)
     X_tree_prime[:,indexes[1]] = sum(X_tree_prime[:,indexes],dims = 2 )
     X_tree_prime = X_tree_prime[:,1:end .!= indexes[2]]
 

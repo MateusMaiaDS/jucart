@@ -74,8 +74,8 @@ function draw_tree!(bart_tree::BartTree, tree_residuals::Vector{Float64}, bart_s
     elseif tree_proposal == 'p' 
         prune_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
     elseif tree_proposal == 'c'
-        # change_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
-        grow_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
+        change_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
+        # grow_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
     else 
         throw(DomainError("Tree proposal is invalid",tree_proposal))
     end
@@ -84,8 +84,9 @@ end
 function draw_trees!(bart_state::BartState,bart_model::BartModel)
 
     for bart_tree in bart_state.ensemble.bart_trees
+        print(bart_tree)
         fhat_without_current_tree = bart_state.fhat .- predict(bart_tree)
-        tree_residuals = bart_model.td.y_train .- fhat_without_current_tree
+        tree_residuals = bart_model.td.y_train #.- fhat_without_current_tree
         # print("t_r: ",tree_residuals[1],"\n")
         draw_tree!(bart_tree,tree_residuals,bart_state,bart_model)
         draw_μ!(bart_tree,bart_state)
