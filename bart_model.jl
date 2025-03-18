@@ -107,6 +107,7 @@ mutable struct StandardBartState <: BartState
     fhat::Vector{Float64}
     σ::Float64 # Residual standard deviation
     s::Vector{Float64} # Vector of probability of sampling a predictor
+    shapes_dirichlet::Vector{Float64}
 end
 
 function StandardBartState(bart_model::BartModel)
@@ -117,7 +118,7 @@ function StandardBartState(bart_model::BartModel)
     bart_trees = [BartTree(Tree(Leaf(0.0)),ones(Float64,bart_model.td.n,1),BartSufficientStats(1,ones(Float64,1),zeros(Float64,1))) for _ in 1:bart_model.hypers.m]
     init_f_hat = zeros(Float64,bart_model.td.n)
 
-    return StandardBartState(bart_trees,init_f_hat,bart_model.td.σ_OLS,fill(1/bart_model.td.p,bart_model.td.p))
+    return StandardBartState(BartEnsemble(bart_trees),init_f_hat,bart_model.td.σ_OLS,fill(1/bart_model.td.p,bart_model.td.p),4.0 .*ones(Float64,bart_model.td.p))
 
 end
 

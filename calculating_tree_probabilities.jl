@@ -1,25 +1,25 @@
 # Probability of a node being terminal
-function get_prob_non_terminal(depth::Int64, bm::BartModel)
-    bm.hypers.α*(1+depth)^(-bm.hypers.β)
+function get_prob_non_terminal(depth::Int64, bart_model::BartModel)
+    bart_model.hypers.α*(1+depth)^(-bart_model.hypers.β)
 end
 
 # Probability ratio from a MH step from a GROW move ( no node to calculate the whole tree)
-function get_log_prob_grow_leaf_ratio(leaf::Node,tree::Tree, bm::BartModel)
+function get_log_prob_grow_leaf_ratio(leaf::Node,tree::Tree, bart_model::BartModel)
 
     depth = get_depth(leaf,tree)
-    prob_selected_leaf_nonterminal::Float64 = get_prob_non_terminal(depth,bm) # Calculate here before to avoid calculate twice later
-    return (log(prob_selected_leaf_nonterminal)+ 2*log(1-get_prob_non_terminal((depth+1),bm))) - log(1-prob_selected_leaf_nonterminal)
+    prob_selected_leaf_nonterminal::Float64 = get_prob_non_terminal(depth,bart_model) # Calculate here before to avoid calculate twice later
+    return (log(prob_selected_leaf_nonterminal)+ 2*log(1-get_prob_non_terminal((depth+1),bart_model))) - log(1-prob_selected_leaf_nonterminal)
 
 end
 
 # Probability ratio from a MH step from a PRUNE move ( no node to calculate the whole tree)
-function get_log_prob_prune_branch_ratio(branch::Branch, bm::BartModel,tree::Tree)
+function get_log_prob_prune_branch_ratio(branch::Branch, bart_model::BartModel,tree::Tree)
 
     depth = get_depth(branch,tree)
 
-    prob_selected_branch_nonterminal::Float64 = get_prob_non_terminal(depth,bm) # Calculate here before to avoid calculate twice later
+    prob_selected_branch_nonterminal::Float64 = get_prob_non_terminal(depth,bart_model) # Calculate here before to avoid calculate twice later
 
-    return log(1-prob_selected_branch_nonterminal) - (log(prob_selected_branch_nonterminal) + 2*log(1-get_prob_non_terminal(depth+1,bm))) 
+    return log(1-prob_selected_branch_nonterminal) - (log(prob_selected_branch_nonterminal) + 2*log(1-get_prob_non_terminal(depth+1,bart_model))) 
 end
 
 
@@ -102,9 +102,9 @@ function leafprob(x::Vector{Float64}, leaf::Leaf, tree::Tree, current_prob::Floa
 end
 
 # This function initialise the creating of the X_tree, remember each row is a observation and each column is a terminal node
-function leafprob(X::Matrix{Float64},bt::BartTree,bm::BartModel)::Matrix{Float64}
-    X_tree::Matrix{Float64} = zeros(Float64,bm.td.n,bt.ss.number_leaves)
-    for i in 1:bm.td.n
+function leafprob(X::Matrix{Float64},bt::BartTree,bart_model::BartModel)::Matrix{Float64}
+    X_tree::Matrix{Float64} = zeros(Float64,bart_model.td.n,bt.ss.number_leaves)
+    for i in 1:bart_model.td.n
         X_tree[i,:] .= leafprob(X[i,:],bt.tree)
     end
     return X_tree
@@ -112,7 +112,7 @@ end
 
 function leafprob(X::Matrix{Float64},tree::Tree)::Matrix{Float64}
     n::Int64 = size(X,1)
-    X_tree::Matrix{Float64} = zeros(Float64,n,length(get_leaf_nodes(tree.root)))
+    X_tree = zeros(Float64,n,length(get_leaf_nodes(tree.root)))
     for i in 1:n
         X_tree[i,:] .= leafprob(X[i,:],tree)
     end
@@ -122,25 +122,26 @@ end
 # Functions associated with the Dirichlet prior from linero
 ## == start == ##
 # If the arrives into a Leaf it will do nothing ( do not count in leaves)
-varcount!(leaf::Leaf,counts::Vector) = nothing
+varcount!(leaf::Leaf,var_counts::Vector) = nothing
 
 # Iterating over the tree counting all the rules
-function varcount!(branch::Branch,counts::Vector)
+function varcount!(branch::Branch,var_counts::Vector)
     var_counts[branch.split_var] += 1
     varcount!(branch.left,var_counts)
     varcount!(branch.right,var_counts)
 end
 
 # Count within a single tree
-function varcount(tree::Tree, bm::BartModel)
-    var_counts = zeros(bm.td.p)
-    var_counts = varcount!(tree.root,var_counts)
-    return var_counts
+function varcount(tree::Tree, bart_model::BartModel)
+    var_counts = zeros(bart_model.td.p)
+    varcount!(tree.root,var_counts)
+    var_counts
 end
 
 ## Counting for all trees:
-function varcounts(trees::Vector{BartTree}, bm::BartModel)
-    vec(sum(reduce(hcat, [varcount(bt.tree, bm) for bt in trees]), dims = 2))
+function varcounts(trees::Vector{BartTree}, bart_model::BartModel)
+    comprehension_list = [varcount(bart_tree.tree, bart_model) for bart_tree in trees]
+    vec(sum(reduce(hcat, comprehension_list), dims = 2))
 end
 
 # Function helper to avoid numerical issues
@@ -151,11 +152,11 @@ function log_sum_exp(x)
 
   
 # Updating the vector of probabilities for each covariate
-function draws!(bart_state::BartState, bm::BartModel)
+function draw_s!(bart_state::BartState, bart_model::BartModel)
     
     # Count variables for the whole forest
-    forest_vc = varcounts(bart_state.ensemble.trees,bm::BartModel)
-    shapes = bart_state.shape / bm.td.p .+ forest_vc # Recall that bart_state.shape is the dirichelt parameter \alpha in Linero original paper
+    forest_vc = varcounts(bart_state.ensemble.bart_trees,bart_model)
+    shapes = bart_state.shapes_dirichlet / bart_model.td.p .+ forest_vc # Recall that bart_state.shape is the dirichelt parameter \alpha in Linero original paper
     y = log.(rand.(Gamma.(shapes .+ 1, 1))) # Applying the log to avoid numerical issues
     z = log.(rand(length(shapes))) ./ shapes # Adding a uniform noise trick
     logs = y + z
@@ -164,18 +165,18 @@ function draws!(bart_state::BartState, bm::BartModel)
 end    
 
 ## Sampling a var from the updated bart_state.s from a dirichelt from linero paper
-function sample_var(bart_state::BartState,bm::BartModel)
+function sample_var(bart_state::BartState,bart_model::BartModel)
     # Maybe need to add a conditional for the case when the Dirichlet prior isn't used 
-    return sample(1:bm.td.p, weights(exp.(bart_state.s)))
+    return sample(1:bart_model.td.p, weights(exp.(bart_state.s)))
 end
 
 ## end -- linero functions
 
 ## Drawing a cutpoint for the proposed split_var
-function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bm::BartModel)
+function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bart_model::BartModel)
     branch = leaf
-    lower = [bm.td.xmin[:,split_var][1]]
-    upper = [bm.td.xmax[:,split_var][1]]
+    lower = [bart_model.td.xmin[:,split_var][1]]
+    upper = [bart_model.td.xmax[:,split_var][1]]
     check = branch == tree.root ? false : true # Checking if arrived the root
     while check
         left = isLeft(branch,tree)
@@ -193,13 +194,13 @@ function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bm::BartModel)
     upper = minimum(upper)
 
     # Using the xcut approach ( this is experimental using xcut, the alternative and simpler version is just a uniform sample -- commented below)
-    mask = (bm.td.xcut[:,split_var] .> lower) .& (bm.td.xcut[:,split_var] .< upper)
+    mask = (bart_model.td.xcut[:,split_var] .> lower) .& (bart_model.td.xcut[:,split_var] .< upper)
 
     # Verifying if it's a valid cutpoint
     if(!any(mask))
         return -1.0 # Since data is always scaled there's no possible way of returning -1 (and this corresponds to an invalid node)
     else 
-        return rand(bm.td.xcut[mask,split_var],1)[1]
+        return rand(bart_model.td.xcut[mask,split_var],1)[1]
     end
     
     # ## simpler version:
@@ -207,10 +208,10 @@ function draw_cutpoint!(leaf::Leaf,split_var::Int,tree::Tree,bm::BartModel)
 end
 
 ## Drawing a cutpoint for the proposed split_var
-function draw_cutpoint!(branch::Branch,split_var::Int,tree::Tree,bm::BartModel)
+function draw_cutpoint!(branch::Branch,split_var::Int,tree::Tree,bart_model::BartModel)
     
-    lower = [bm.td.xmin[:,split_var][1]]
-    upper = [bm.td.xmax[:,split_var][1]]
+    lower = [bart_model.td.xmin[:,split_var][1]]
+    upper = [bart_model.td.xmax[:,split_var][1]]
     check = branch == tree.root ? false : true # Checking if arrived the root
     while check
         left = isLeft(branch,tree)
@@ -228,13 +229,13 @@ function draw_cutpoint!(branch::Branch,split_var::Int,tree::Tree,bm::BartModel)
     upper = minimum(upper)
 
     # Using the xcut approach ( this is experimental using xcut, the alternative and simpler version is just a uniform sample -- commented below)
-    mask = (bm.td.xcut[:,split_var] .> lower) .& (bm.td.xcut[:,split_var] .< upper)
+    mask = (bart_model.td.xcut[:,split_var] .> lower) .& (bart_model.td.xcut[:,split_var] .< upper)
 
     # Verifying if it's a valid cutpoint
     if(!any(mask))
         return -1.0 # Since data is always scaled there's no possible way of returning -1 (and this corresponds to an invalid node)
     else 
-        return rand(bm.td.xcut[mask,split_var],1)[1]
+        return rand(bart_model.td.xcut[mask,split_var],1)[1]
     end
     
     # ## simpler version:

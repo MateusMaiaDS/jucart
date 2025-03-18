@@ -13,7 +13,7 @@ include("bart_main_function.jl")
 Random.seed!(42)
 
 # Sample data
-n_ = 5
+n_ = 100
 x  = rand(n_,2)
 y = 5 .+ 2 .*x[:,1] .+ randn(n_)              # Response vector#
 tree_resid = rand(n_)
@@ -35,14 +35,16 @@ bart_tree = BartTree(tree,matrix_test,ss_bart)
 bart_ensemble_ = BartEnsemble([bart_tree])
 
 
-std_bart_state_ = StandardBartState(bart_ensemble_,tree_resid,1.0,[0.5,0.5])
+std_bart_state_ = StandardBartState(bart_ensemble_,tree_resid,1.0,[0.5,0.5],[1.0,1.0])
 
 # std_bart_state_ = StandardBartState(undef)
 # ss_bart::BartSufficientStats = suffstats(b)
-print(bart_tree.ss.number_leaves)
+# print(bart_tree.ss.number_leaves)
 grow_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
-print(bart_tree.ss.number_leaves)
+# print(bart_tree.ss.number_leaves)
 # prune_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
 draw_μ!(bart_tree,std_bart_state_)
-print(bart_tree.ss.number_leaves)
+# print(bart_tree.ss.number_leaves)
 # prune_proposal!(bart_tree,tree_resid,std_bart_state_,bm_)
+
+bart_model_test = fit(BartModel,x,y)

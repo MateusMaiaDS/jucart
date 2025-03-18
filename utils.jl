@@ -75,3 +75,15 @@ function get_xcut(x_train::Matrix{Float64},numcut::Int64)
     return xcut
 
 end
+
+
+function progress_bar(current, total; width=50)
+    percent = current / total
+    completed = round(Int, percent * width)
+    remaining = width - completed
+    bar = "[" * "#"^completed * "-"^remaining * "]"
+    percent_display = round(percent * 100; digits=1)
+    
+    print("\r", bar, " ", percent_display, "%")
+    flush(stdout)
+end

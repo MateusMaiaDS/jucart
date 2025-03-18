@@ -24,7 +24,7 @@ function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bar
     leaf = leaves[index]
 
     new_variable = sample_var(bart_state,bart_model)
-    new_cutpoint = draw_cutpoint!(leaf,new_variable,tree,bart_model)
+    new_cutpoint = draw_cutpoint!(leaf,new_variable,bart_tree.tree,bart_model)
     # Updating the sufficent statistics of the current tree
     bart_tree.ss = get_suffstats(tree_residuals,bart_tree.X_tree,bart_state,bart_model)
 
@@ -170,10 +170,9 @@ function change_proposal!(bart_tree::BartTree,tree_residuals::Vector{Float64},ba
     end
 
     branch = get_my_parent(leaf,bart_tree.tree)
-
     new_variable = sample_var(bart_state,bart_model)
-    new_cutpoint = draw_cutpoint!(branch,new_variable,tree,bart_model)
-
+    new_cutpoint = draw_cutpoint!(branch,new_variable,bart_tree.tree,bart_model)
+    
     new_branch = deepcopy(branch)
     new_branch.split_var = new_variable
     new_branch.cutpoint = new_cutpoint
