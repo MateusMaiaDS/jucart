@@ -13,10 +13,10 @@ include("bart_main_function.jl")
 Random.seed!(42)
 
 # Sample data
-n_ = 100
-x  = rand(n_,2)
-y = 5 .+ 2 .*x[:,1] .+ randn(n_)              # Response vector#
-tree_resid = rand(n_)
+n_ = 10
+x  = reshape(collect(1:10) ./ 10,n_,1)
+y = vec(ifelse.(x .< 0.5,-1.0,1.0))              # Response vector#
+tree_resid = zeros(Float64,n_)
 td_::TrainData = TrainData(x,y,100,false)
 hypers_::Hypers =  Hypers(td_)
 mcmc_::MCMC = MCMC()

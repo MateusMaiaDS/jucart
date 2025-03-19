@@ -1,7 +1,7 @@
 function get_suffstats(tree_residuals::Vector{Float64},X_tree::Matrix{Float64},bart_state::StandardBartState,bm::BartModel)
 
     number_leaves = size(X_tree,2)
-    omega = (bart_state.σ^(2)) ./ (sum(X_tree, dims = 1).*bm.hypers.σ_μ^2 .+ bart_state.σ^2) # A vector with σ²_μ/(σ²+nₗσ²_μ) for each terminal node
+    omega = (bm.hypers.σ_μ^(2)) ./ (sum(X_tree, dims = 1).*bm.hypers.σ_μ^2 .+ bart_state.σ^2) # A vector with σ²_μ/(σ²+nₗσ²_μ) for each terminal node
     r_sum = transpose(X_tree)*tree_residuals # Doing this operation is the same adding up residuals within terminal nodes ∑ᵢrᵢ
 
     if r_sum[1]==Inf || r_sum[1]==-Inf
@@ -75,7 +75,6 @@ function draw_tree!(bart_tree::BartTree, tree_residuals::Vector{Float64}, bart_s
         prune_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
     elseif tree_proposal == 'c'
         change_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
-        # grow_proposal!(bart_tree,tree_residuals,bart_state,bart_model)
     else 
         throw(DomainError("Tree proposal is invalid",tree_proposal))
     end
@@ -84,12 +83,11 @@ end
 function draw_trees!(bart_state::BartState,bart_model::BartModel)
 
     for bart_tree in bart_state.ensemble.bart_trees
-        print(bart_tree)
         fhat_without_current_tree = bart_state.fhat .- predict(bart_tree)
-        tree_residuals = bart_model.td.y_train #.- fhat_without_current_tree
+        tree_residuals = bart_model.td.y_train .- fhat_without_current_tree
         # print("t_r: ",tree_residuals[1],"\n")
         draw_tree!(bart_tree,tree_residuals,bart_state,bart_model)
         draw_μ!(bart_tree,bart_state)
-        bart_state.fhat = fhat_without_current_tree + predict(bart_tree)
+        bart_state.fhat = fhat_without_current_tree .+ predict(bart_tree)
     end
 end
