@@ -18,6 +18,10 @@ function unnormalize_y!(y_train::Vector{Float64}, ymin::Float64,ymax::Float64)
     y_train .= (ymax.-ymin).*(y_train .+ 0.5)./ .- ymin
 end
 
+function unnormalize_y!(y_train::Vector{Float64},bart_model::BartModel)
+    unnormalize_y!(y_train,bart_model.td.ymin,bart_model.td.ymax)
+end
+
 function naive_sigma(x_train::Matrix{Float64},y_train::Vector{Float64})
 
     n_  = size(x_train,1)
@@ -87,3 +91,4 @@ function progress_bar(current, total; width=50)
     print("\r", bar, " ", percent_display, "%")
     flush(stdout)
 end
+

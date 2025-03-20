@@ -102,19 +102,12 @@ function prune_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},ba
     # Updating the sufficent statistics of the current tree
     # (need to update in any case as they are used to sample \mu)
     bart_tree.ss = get_suffstats(tree_residuals,bart_tree.X_tree,bart_state,bart_model)
-    leaves::Vector{Node} = get_leaf_nodes(bart_tree.tree.root)
-    index = rand(1:length(leaves))
-    leaf = leaves[index]
-    leaf_isleft = isLeft(leaf,bart_tree.tree)
     
-    if leaf_isleft
-        indexes = [index, index + 1 ]
-    else 
-        indexes = [index - 1, index]
-    end
+    # Getting only parents of terminal nodes
+    branch = rand(get_onlyparents(bart_tree.tree))
 
-    branch = get_my_parent(leaf,bart_tree.tree)
-
+    indexes =  sort(findall(x -> (x == branch.left) || (x == branch.right), get_leaf_nodes(bart_tree.tree.root))) # Before I did in a way that I would collect only leaves, and selecting it's parent. But can be the case it's sibling isn't a terminal node.
+    
     X_tree_prime = copy(bart_tree.X_tree)
     X_tree_prime[:,indexes[1]] = sum(bart_tree.X_tree[:,indexes],dims = 2 )
     X_tree_prime = X_tree_prime[:,1:end .!= indexes[2]]

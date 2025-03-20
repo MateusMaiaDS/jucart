@@ -69,7 +69,7 @@ struct Hypers
     ν::Float64
     δ::Float64
 
-    function Hypers(td::TrainData; m = 10,α = 0.95, β = 2.0,k = 2.0, q = 0.9,ν = 3)
+    function Hypers(td::TrainData; m = 100,α = 0.95, β = 2.0,k = 2.0, q = 0.9,ν = 3)
 
         # Quicker and clever way of obtaing
         δ = 1/quantile(InverseGamma(ν/2,ν/(2*td.σ_OLS^2)),q)

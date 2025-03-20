@@ -55,8 +55,8 @@ function draw_σ!(bart_state::BartState,bart_model::BartModel)
 
     a = 0.5*(bart_model.td.n + bart_model.hypers.ν)
     d = 0.5*(bart_model.hypers.ν + bart_model.hypers.δ + sum((bart_model.td.y_train-bart_state.fhat).^2))
-    # bart_state.σ = sqrt(rand(InverseGamma(a,d)))
-    bart_state.σ = 1
+    bart_state.σ = sqrt(rand(InverseGamma(a,d)))
+    # bart_state.σ = 1
 
 
 end
