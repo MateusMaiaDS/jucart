@@ -38,6 +38,9 @@ function grow_proposal!(bart_tree::BartTree, tree_residuals::Vector{Float64},bar
     goesleft = bart_tree.X_tree[:,index] .* probleft(bart_model.td.x_train,branch)
     goesright = bart_tree.X_tree[:,index] .- goesleft
 
+    # if sum(goesleft)<25 || sum(goesright)<25
+    #     return
+    # end
 
     # Ending function for invalid grow
     if all(iszero,goesleft) | all(iszero,goesright) 
@@ -176,6 +179,10 @@ function change_proposal!(bart_tree::BartTree,tree_residuals::Vector{Float64},ba
 
     X_tree_prime = copy(bart_tree.X_tree)
     X_tree_prime[:,indexes] = hcat(goesleft,goesright)
+
+    # if sum(X_tree_prime[:,indexes[1]])<25 || sum(X_tree_prime[:,indexes[2]])<25
+    #     return
+    # end
 
     ss_prime = get_suffstats(tree_residuals,X_tree_prime,bart_state,bart_model)
 

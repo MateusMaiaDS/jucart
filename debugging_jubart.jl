@@ -2,6 +2,7 @@ using LinearAlgebra
 using Statistics
 using StatsBase
 using Random
+using Plots
 include("tree.jl")
 include("bart_model.jl")
 include("calculating_tree_probabilities.jl")
@@ -13,9 +14,11 @@ include("bart_main_function.jl")
 Random.seed!(42)
 
 # Sample data
-n_ = 100
+n_ = 250
 x  = reshape(rand(Uniform(0,1),n_),n_,1)
-y = vec(ifelse.(x .< 0.5,-1.0,1.0))  
+y = vec(ifelse.(x .< 0.5,-1.0,1.0))  .+ rand(Normal(0,0.01),n_)
+# x  = reshape(rand(Uniform(-pi,pi),n_),n_,1)
+# y = vec(sin.(x))  .+ rand(Normal(0,0.1),n_)
 
 numcut = 100; usequant = true; mcmc = MCMC()
 
@@ -38,5 +41,6 @@ for i in 1:1000
     post_fhat[i,:] = bart_state.fhat
 end
 
-# bart_states[15].ensemble.bart_trees[2].X_tree
-# bart_state.ensemble.bart_trees[2].tree
+post_fhat_mean =(mean(post_fhat[501:1000,1:n_],dims = 1)[1,:],bart_model)
+scatter(x,y)
+scatter!(x,post_fhat_mean)

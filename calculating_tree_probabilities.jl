@@ -231,7 +231,7 @@ function draw_cutpoint!(branch::Branch,split_var::Int,tree::Tree,bart_model::Bar
     # Using the xcut approach ( this is experimental using xcut, the alternative and simpler version is just a uniform sample -- commented below)
     mask = (bart_model.td.xcut[:,split_var] .> lower) .& (bart_model.td.xcut[:,split_var] .< upper)
 
-    # Verifying if it's a valid cutpoint
+    # # Verifying if it's a valid cutpoint
     if(!any(mask))
         return -1.0 # Since data is always scaled there's no possible way of returning -1 (and this corresponds to an invalid node)
     else 
