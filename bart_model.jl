@@ -2,6 +2,7 @@ using Distributions
 
 ##### sampler types
 abstract type BartState end
+abstract type BartChain end
 
 mutable struct SoftSufficientStats
     number_leaves::Int
@@ -148,3 +149,21 @@ function TrainData(x_train::Matrix{Float64},y_train::AbstractVector,numcut::Int6
     TrainData(n,p,x_train,y_train,xmin,xmax,xcut,ymin,ymax,σ_OLS)
 end
 
+
+# Creating a StandardBartChain object
+struct StandardBartChain <: BartChain
+    
+    bart_model::BartModel
+    tree_post::Vector{BartEnsemble}
+    σ_post::Vector{Float64}
+    fhat_post::Matrix{Float64}
+    fhat_post_mean::Vector{Float64}
+
+end
+
+function BartChain(std_bart_state::StandardBartState,bart_model::BartModel,tree_post::Vector{BartEnsemble},σ_post::Vector{Float64},fhat_post::Matrix{Float64},fhat_post_mean::Vector{Float64})
+
+    StandardBartChain(bart_model::BartModel,tree_post::Vector{BartEnsemble},σ_post::Vector{Float64},fhat_post::Matrix{Float64},fhat_post_mean::Vector{Float64})
+
+end
+    
