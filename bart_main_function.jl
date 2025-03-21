@@ -1,4 +1,4 @@
-function BartState.fit(BartModel,X_train::Matrix{Float64}, y_train::Vector{Float64},numcut = 100, usequant = true,mcmc = MCMC(); hyperargs...)
+function StatsBase.fit(BartModel,X_train::Matrix{Float64}, y_train::Vector{Float64},numcut = 100, usequant = true,mcmc = MCMC(); hyperargs...)
    
     # this is initialised only once and is not udpated
     bart_model = BartModel(X_train,y_train,mcmc,numcut,usequant;hyperargs...)

@@ -45,5 +45,5 @@ bart_state = StandardBartState(bart_model)
 
 # bart_run = fit_one(BartModel,x,y)
 
-@btime fit_one(BartModel,x,y)
+@btime fit(BartModel,x,y)
 
